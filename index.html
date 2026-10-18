@@ -462,7 +462,7 @@ function renderStories() {
       <button class="story-action ${story.id === selectedId ? 'selected-action' : ''}" data-select="${story.id}">${story.id === selectedId ? 'Selected' : 'Use story'}</button>
     </article>
   `).join('');
-  list.querySelectorAll('[data-select]').forEach(button => button.addEventListener('click', () => selectStory(Number(button.dataset.select))));
+  list.querySelectorAll('[data-select]').forEach(button => button.addEventListener('click', () => selectStory(button.dataset.select)));
 }
 
 function renderQueue() {
@@ -475,7 +475,7 @@ function renderQueue() {
     </button>
   `).join('');
   document.getElementById('emptyQueue').classList.toggle('hidden', queue.length > 0);
-  document.querySelectorAll('[data-queue]').forEach(button => button.addEventListener('click', () => selectStory(Number(button.dataset.queue))));
+  document.querySelectorAll('[data-queue]').forEach(button => button.addEventListener('click', () => selectStory(button.dataset.queue)));
 }
 
 function renderStudio() {
@@ -559,8 +559,8 @@ function addArchiveResults(topic = '') {
   stories = [...fresh, ...stories.filter(story => !String(story.id).startsWith('archive-'))]; save(); render(); return fresh.length;
 }
 
-function selectStory(id) { const candidate = stories.find(item => item.id === id); const selectedCount = stories.filter(item => item.status !== 'briefing').length; if (candidate?.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
-  selectedId = id;
+function selectStory(id) { const candidate = stories.find(item => String(item.id) === String(id)); if (!candidate) return; const selectedCount = stories.filter(item => item.status !== 'briefing').length; if (candidate.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
+  selectedId = candidate.id;
   const story = selectedStory(); 
   if (story.status === 'briefing') story.status = 'recorded';
   setStage('script', false);
