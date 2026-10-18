@@ -240,10 +240,10 @@ h3 { margin-bottom: 0; font-size: 15px; }
             <p class="eyebrow">DAILY BRIEFING</p>
             <h2>Top stories for today</h2>
           </div>
-          <span class="count-badge" id="storyCount">4 stories</span>
+          <span class="count-badge" id="storyCount">Up to 10 stories</span>
         </div>
         <div class="briefing-meta">
-          <span>AI · Robotics · Policy · Schools</span>
+          <span>Up to 10 to review · Choose up to 7</span>
           <span>Updated 7:30 AM</span>
         </div>
         <div class="research-tool" id="researchTool">
@@ -259,9 +259,9 @@ h3 { margin-bottom: 0; font-size: 15px; }
               <option value="when:30d">Past month</option>
               <option value="">Any time</option>
             </select>
-            <button class="secondary-button" id="runResearch">Search news</button>
+            <button class="secondary-button" id="runResearch">Run in-house research</button>
           </div>
-          <p class="research-note" id="researchNote">This opens a live news search now. The automated research agent will connect here later.</p>
+          <p class="research-note" id="researchNote">The research service checks approved feeds and organizes the results here.</p>
         </div>
         <div class="story-list" id="storyList"></div>
       </section>
@@ -373,7 +373,7 @@ const initialStories = [
   { id: 4, rank: 4, category: 'Schools', title: 'Schools test a new approach to teaching with AI', summary: 'What educators are actually implementing and what families should know.', previewLine: 'Schools are testing new ways to use AI.', whyItMatters: 'The real story is what teachers are implementing and how students and families may be affected.', readCopy: 'Schools are testing a new way to use AI in the classroom. The useful part of this story is seeing what teachers are actually doing and how students and families may be affected.', impact: 'Useful angle', status: 'briefing' }
 ];
 
-let stories = loadStories();
+const MAX_SHOW_STORIES = 7; let stories = loadStories();
 let selectedId = Number(localStorage.getItem('newsToShow.selectedId')) || null;
 let activeStage = localStorage.getItem('newsToShow.activeStage') || 'research';
 let toastTimer;
@@ -399,12 +399,12 @@ function render() {
   renderStudio();
   renderWorkflow();
   document.getElementById('todayLabel').textContent = `Today · ${new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date())}`;
-  document.getElementById('storyCount').textContent = `${stories.length} stories`;
+  document.getElementById('storyCount').textContent = `${stories.length} of 10 max`;
 }
 
 function renderWorkflow() {
   const stageOrder = ['research', 'selected', 'script', 'edited', 'published'];
-  const story = selectedStory();
+  const story = selectedStory(); = stories.filter(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
   const progress = !story ? 0 : ({ recorded: 2, editing: 3, review: 4, ready: 4, scheduled: 5 }[story.status] || 1);
   document.querySelectorAll('[data-stage-panel]').forEach(panel => {
     const stages = panel.dataset.stagePanel.split(' ');
@@ -472,7 +472,7 @@ function renderQueue() {
 }
 
 function renderStudio() {
-  const story = selectedStory();
+  const story = selectedStory(); = stories.filter(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
   const empty = document.getElementById('studioEmpty');
   const workspace = document.getElementById('studioWorkspace');
   empty.classList.toggle('hidden', Boolean(story));
@@ -524,9 +524,9 @@ function updateApproval(story) {
 
 function labelForStatus(status) { return ({ briefing: 'Briefing', recorded: 'Recorded', editing: 'Editing', review: 'Review', ready: 'Ready', scheduled: 'Scheduled' })[status] || 'Waiting'; }
 
-function selectStory(id) {
+function selectStory(id) { const candidate = stories.find(item => item.id === id); const selectedCount = stories.filter(item => item.status !== 'briefing').length; if (candidate?.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
   selectedId = id;
-  const story = selectedStory();
+  const story = selectedStory(); = stories.filter(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
   if (story.status === 'briefing') story.status = 'recorded';
   setStage('script', false);
   save(); render();
@@ -542,19 +542,19 @@ function showToast(message) {
 
 document.getElementById('recordingInput').addEventListener('change', event => {
   const file = event.target.files?.[0];
-  const story = selectedStory();
+  const story = selectedStory(); = stories.filter(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
   if (!file || !story) return;
   story.recordingName = file.name; story.recording = true; story.status = 'recorded'; setStage('script', false); save(); render(); showToast('Recording added — ready for the automatic edit');
 });
 
 document.getElementById('clearFile').addEventListener('click', () => {
-  const story = selectedStory(); if (!story) return;
+  const story = selectedStory(); = stories.filter(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; } if (!story) return;
   story.recordingName = ''; story.recording = false; story.status = 'recorded';
   document.getElementById('recordingInput').value = ''; save(); render();
 });
 
 document.getElementById('runEdit').addEventListener('click', () => {
-  const story = selectedStory(); if (!story || !story.recording) return;
+  const story = selectedStory(); = stories.filter(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; } if (!story || !story.recording) return;
   story.status = 'editing'; setStage('edited', false); save(); render();
   const bar = document.getElementById('progressBar'); const label = document.getElementById('progressLabel');
   const steps = [[25, 'Trimming the opening…'], [52, 'Cleaning the audio…'], [78, 'Creating captions…'], [100, 'Preparing your review package…']];
@@ -562,7 +562,7 @@ document.getElementById('runEdit').addEventListener('click', () => {
 });
 
 document.getElementById('generateDrafts').addEventListener('click', () => {
-  const story = selectedStory(); if (!story) return;
+  const story = selectedStory(); = stories.filter(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; } if (!story) return;
   story.drafts = {
     youtube: `${story.title} — what changed and why it matters`,
     instagram: `Here is the part of this story that deserves attention. ${story.title} #AI #Technology`,
@@ -574,7 +574,7 @@ document.getElementById('generateDrafts').addEventListener('click', () => {
 });
 
 document.getElementById('approvePublish').addEventListener('click', () => {
-  const story = selectedStory(); if (!story || story.status !== 'ready') return;
+  const story = selectedStory(); = stories.filter(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; } if (!story || story.status !== 'ready') return;
   story.status = 'scheduled'; story.publishedAt = new Date().toISOString(); setStage('published', false); save(); render(); showToast('Package approved — ready for scheduler connection');
 });
 
@@ -589,9 +589,9 @@ document.getElementById('runResearch').addEventListener('click', () => {
   if (!topic) { showToast('Enter a topic to search'); document.getElementById('researchTopic').focus(); return; }
   const query = [topic, windowFilter].filter(Boolean).join(' ');
   const url = `https://news.google.com/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
-  window.open(url, '_blank', 'noopener');
-  document.getElementById('researchNote').textContent = `Live search opened for “${topic}”. The agent version will summarize and organize these results here.`;
-  showToast('Live news search opened');
+  showToast('Research service connection pending');
+  document.getElementById('researchNote').textContent = `The research service will organize results here once its cloud endpoint is connected. “${topic}”. The agent version will summarize and organize these results here.`;
+  showToast('Research connection pending');
 });
 document.getElementById('navQueue').addEventListener('click', () => setStage('selected'));
 document.getElementById('navStudio').addEventListener('click', () => setStage('script'));
