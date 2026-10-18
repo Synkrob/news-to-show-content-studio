@@ -373,6 +373,13 @@ const initialStories = [
   { id: 4, rank: 4, category: 'Schools', title: 'Schools test a new approach to teaching with AI', summary: 'What educators are actually implementing and what families should know.', previewLine: 'Schools are testing new ways to use AI.', whyItMatters: 'The real story is what teachers are implementing and how students and families may be affected.', readCopy: 'Schools are testing a new way to use AI in the classroom. The useful part of this story is seeing what teachers are actually doing and how students and families may be affected.', impact: 'Useful angle', status: 'briefing' }
 ];
 
+
+const archiveStories = [
+  { id: 'archive-1', rank: 1, category: 'AI companies', title: 'Archived demo: multimodal AI moved into everyday tools', summary: 'An older example of how text, image, and voice features began appearing together in consumer and business products.', previewLine: 'Multimodal AI moved into everyday tools.', whyItMatters: 'It helps explain why today’s AI products increasingly combine several ways of working in one place.', readCopy: 'This archived example shows how multimodal AI moved into everyday tools. The broader lesson is that AI became easier to use when people could work with text, images, and voice together.', impact: 'Archive example', status: 'briefing', source: 'Archive demo', publishedAt: '2024-05-13T00:00:00.000Z' },
+  { id: 'archive-2', rank: 2, category: 'Robotics', title: 'Archived demo: robots expanded beyond factory floors', summary: 'An older example of robots being tested in warehouses, hospitals, and other service environments.', previewLine: 'Robots expanded beyond factory floors.', whyItMatters: 'It gives context for today’s robotics stories by showing how deployment gradually moves from controlled settings into public spaces.', readCopy: 'This archived example follows robots moving beyond factory floors and into service environments. The useful question is where a robot is solving a real problem, rather than simply demonstrating a new capability.', impact: 'Archive example', status: 'briefing', source: 'Archive demo', publishedAt: '2023-10-04T00:00:00.000Z' },
+  { id: 'archive-3', rank: 3, category: 'Policy', title: 'Archived demo: public agencies began writing AI guidance', summary: 'An older example of governments creating early guidance for responsible AI use.', previewLine: 'Public agencies began writing AI guidance.', whyItMatters: 'It shows how today’s AI rules grew from early policy decisions and pilot programs.', readCopy: 'This archived example shows public agencies beginning to write guidance for AI use. It matters because early policies often become the starting point for later rules and standards.', impact: 'Archive example', status: 'briefing', source: 'Archive demo', publishedAt: '2023-01-01T00:00:00.000Z' },
+  { id: 'archive-4', rank: 4, category: 'Schools', title: 'Archived demo: schools tested classroom AI policies', summary: 'An older example of schools working through acceptable use, teacher support, and student guidelines.', previewLine: 'Schools tested classroom AI policies.', whyItMatters: 'It gives background for current education stories about AI access, safety, and teaching practice.', readCopy: 'This archived example shows schools working through early classroom AI policies. The important part is how educators balanced useful tools with clear expectations for students and families.', impact: 'Archive example', status: 'briefing', source: 'Archive demo', publishedAt: '2023-09-01T00:00:00.000Z' }
+];
 const MAX_SHOW_STORIES = 7; let stories = loadStories();
 let selectedId = Number(localStorage.getItem('newsToShow.selectedId')) || null;
 let activeStage = localStorage.getItem('newsToShow.activeStage') || 'research';
@@ -524,6 +531,48 @@ function updateApproval(story) {
 
 function labelForStatus(status) { return ({ briefing: 'Briefing', recorded: 'Recorded', editing: 'Editing', review: 'Review', ready: 'Ready', scheduled: 'Scheduled' })[status] || 'Waiting'; }
 
+
+function briefingStories() {
+  const selected = stories.filter(story => story.status !== 'briefing');
+  return (selected.length ? selected : stories).slice(0, MAX_SHOW_STORIES);
+}
+
+function briefingText() {
+  const items = briefingStories();
+  return ['Here is your News to Show briefing.', ...items.map((story, index) => `Story ${index + 1}. ${story.title}. ${story.readCopy || story.summary}`), 'That is the briefing. Choose the stories you want to use for today’s show.'].join(' ');
+}
+
+function speakBriefing() {
+  if (!('speechSynthesis' in window)) { showToast('Audio playback is not available in this browser'); return; }
+  const button = document.getElementById('startBriefing').addEventListener('click', speakBriefing);
+document.getElementById('runResearch').addEventListener('click', async () => {
+  const topic = document.getElementById('researchTopic').value.trim();
+  const windowFilter = document.getElementById('researchWindow').value;
+  if (!topic) { showToast('Enter a topic to search'); document.getElementById('researchTopic').focus(); return; }
+  const note = document.getElementById('researchNote');
+  const button = document.getElementById('runResearch');
+  button.disabled = true; note.textContent = `Checking approved sources for “${topic}”…`;
+  try {
+    const response = await fetch(`/api/research?topic=${encodeURIComponent(topic)}&window=${encodeURIComponent(windowFilter)}`);
+    if (!response.ok) throw new Error('Research service is not connected to this hosted preview.');
+    const payload = await response.json();
+    if (!payload.items?.length) { note.textContent = `No matching stories were found in the approved sources for “${topic}”.`; showToast('No matching stories found'); return; }
+    const fresh = payload.items.map((item, index) => ({ id: `research-${Date.now()}-${index}`, rank: stories.length + index + 1, category: item.category || 'Research', title: item.title, summary: item.summary, previewLine: item.previewLine, whyItMatters: item.whyItMatters, readCopy: item.readCopy, impact: item.impact || 'Needs review', status: 'briefing', source: item.source, sourceUrl: item.url, publishedAt: item.publishedAt }));
+    stories = [...fresh, ...stories]; save(); render();
+    note.textContent = `Found ${fresh.length} stories from ${payload.sources.length} approved sources. Choose up to ${MAX_SHOW_STORIES} for the show.`;
+    showToast('In-house research is ready');
+  } catch (error) {
+    const archiveCount = addArchiveResults(topic);
+    note.textContent = archiveCount ? `Live research is unavailable here, so this is an archived demo briefing with ${archiveCount} matching stories.` : 'The research service is not connected to this hosted preview yet. Try a broader topic or use the local preview for live feeds.';
+    showToast(archiveCount ? 'Showing archived demo stories' : 'Research service not connected');
+  } finally { button.disabled = false; }
+});
+filter(story => !terms.length || terms.some(term => `${story.title} ${story.summary} ${story.category}`.toLowerCase().includes(term))).slice(0, 10);
+  if (!matches.length) return 0;
+  const fresh = matches.map((story, index) => ({ ...story, id: `${story.id}-${Date.now()}-${index}`, rank: index + 1 }));
+  stories = [...fresh, ...stories.filter(story => !String(story.id).startsWith('archive-'))]; save(); render(); return fresh.length;
+}
+
 function selectStory(id) { const candidate = stories.find(item => item.id === id); const selectedCount = stories.filter(item => item.status !== 'briefing').length; if (candidate?.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
   selectedId = id;
   const story = selectedStory(); 
@@ -582,7 +631,7 @@ document.getElementById('studioPanel').addEventListener('click', event => {
   if (event.target.id === 'approvePublish') return;
 });
 
-document.getElementById('startBriefing').addEventListener('click', () => showToast('Audio briefing placeholder opened — cloud audio connects next'));
+document.getElementById('startBriefing').addEventListener('click', speakBriefing);
 document.getElementById('runResearch').addEventListener('click', () => {
   const topic = document.getElementById('researchTopic').value.trim();
   const windowFilter = document.getElementById('researchWindow').value;
