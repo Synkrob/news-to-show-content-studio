@@ -404,7 +404,7 @@ function render() {
 
 function renderWorkflow() {
   const stageOrder = ['research', 'selected', 'script', 'edited', 'published'];
-  const story = selectedStory();(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
+  const story = selectedStory(); 
   const progress = !story ? 0 : ({ recorded: 2, editing: 3, review: 4, ready: 4, scheduled: 5 }[story.status] || 1);
   document.querySelectorAll('[data-stage-panel]').forEach(panel => {
     const stages = panel.dataset.stagePanel.split(' ');
@@ -472,7 +472,7 @@ function renderQueue() {
 }
 
 function renderStudio() {
-  const story = selectedStory();(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
+  const story = selectedStory(); 
   const empty = document.getElementById('studioEmpty');
   const workspace = document.getElementById('studioWorkspace');
   empty.classList.toggle('hidden', Boolean(story));
@@ -526,7 +526,7 @@ function labelForStatus(status) { return ({ briefing: 'Briefing', recorded: 'Rec
 
 function selectStory(id) { const candidate = stories.find(item => item.id === id); const selectedCount = stories.filter(item => item.status !== 'briefing').length; if (candidate?.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
   selectedId = id;
-  const story = selectedStory();(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
+  const story = selectedStory(); 
   if (story.status === 'briefing') story.status = 'recorded';
   setStage('script', false);
   save(); render();
@@ -542,19 +542,19 @@ function showToast(message) {
 
 document.getElementById('recordingInput').addEventListener('change', event => {
   const file = event.target.files?.[0];
-  const story = selectedStory();(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
+  const story = selectedStory(); 
   if (!file || !story) return;
   story.recordingName = file.name; story.recording = true; story.status = 'recorded'; setStage('script', false); save(); render(); showToast('Recording added — ready for the automatic edit');
 });
 
 document.getElementById('clearFile').addEventListener('click', () => {
-  const story = selectedStory();(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; } if (!story) return;
+  const story = selectedStory();  if (!story) return;
   story.recordingName = ''; story.recording = false; story.status = 'recorded';
   document.getElementById('recordingInput').value = ''; save(); render();
 });
 
 document.getElementById('runEdit').addEventListener('click', () => {
-  const story = selectedStory();(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; } if (!story || !story.recording) return;
+  const story = selectedStory();  if (!story || !story.recording) return;
   story.status = 'editing'; setStage('edited', false); save(); render();
   const bar = document.getElementById('progressBar'); const label = document.getElementById('progressLabel');
   const steps = [[25, 'Trimming the opening…'], [52, 'Cleaning the audio…'], [78, 'Creating captions…'], [100, 'Preparing your review package…']];
@@ -562,7 +562,7 @@ document.getElementById('runEdit').addEventListener('click', () => {
 });
 
 document.getElementById('generateDrafts').addEventListener('click', () => {
-  const story = selectedStory();(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; } if (!story) return;
+  const story = selectedStory();  if (!story) return;
   story.drafts = {
     youtube: `${story.title} — what changed and why it matters`,
     instagram: `Here is the part of this story that deserves attention. ${story.title} #AI #Technology`,
@@ -574,7 +574,7 @@ document.getElementById('generateDrafts').addEventListener('click', () => {
 });
 
 document.getElementById('approvePublish').addEventListener('click', () => {
-  const story = selectedStory();(item => item.status !== 'briefing').length; if (story.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; } if (!story || story.status !== 'ready') return;
+  const story = selectedStory();  if (!story || story.status !== 'ready') return;
   story.status = 'scheduled'; story.publishedAt = new Date().toISOString(); setStage('published', false); save(); render(); showToast('Package approved — ready for scheduler connection');
 });
 
