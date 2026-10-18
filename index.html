@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>News to Show — Content Studio</title>
+  <style>
+:root {
+  --bg: #0a0d14;
+  --panel: #121620;
+  --panel-2: #171c28;
+  --border: rgba(255, 255, 255, .08);
+  --text: #f4f7fb;
+  --muted: #94a3b8;
+  --blue: #ff9d52;
+  --blue-strong: #f56e0e;
+  --mint: #f56e0e;
+  --amber: #ffbf80;
+  --red: #ff8c8c;
+  --shadow: 0 18px 50px rgba(0, 0, 0, .22);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; background: radial-gradient(circle at 90% -20%, rgba(245, 110, 14, .13) 0, transparent 38%), var(--bg); color: var(--text); font: 15px/1.45 'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, sans-serif; padding-bottom: 80px; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+
+.topbar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; padding: 16px clamp(18px, 4vw, 54px); border-bottom: 1px solid var(--border); background: rgba(9, 17, 31, .86); backdrop-filter: blur(16px); }
+.brand-lockup, .topbar-actions, .flow-step, .panel-heading, .briefing-meta, .card-title-row, .approval-bar, .file-chip { display: flex; align-items: center; }
+.brand-lockup { gap: 11px; }
+.brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; color: #06101e; background: linear-gradient(135deg, var(--mint), var(--blue)); font-size: 12px; font-weight: 900; letter-spacing: -.5px; }
+.brand-name { font-weight: 800; letter-spacing: -.25px; }
+.brand-subtitle { color: var(--muted); font-size: 12px; }
+.topbar-actions { gap: 12px; }
+.status-pill, .count-badge, .stage-badge, .mini-label, .next-step-tag { border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 12px; padding: 6px 10px; white-space: nowrap; }
+.status-dot { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 12px var(--mint); }
+.icon-button { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--muted); font-size: 20px; }
+.shell { width: min(1250px, calc(100% - 32px)); margin: 28px auto; }
+.page-intro { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin: 8px 2px 18px; }
+.page-intro h1 { margin-bottom: 5px; font-size: clamp(28px, 4vw, 42px); letter-spacing: -1.5px; }
+.page-intro p:not(.eyebrow) { margin-bottom: 0; color: var(--muted); }
+.daily-workflow { margin: 0 0 14px; padding: 12px 14px 10px; border: 1px solid var(--border); border-radius: 15px; background: rgba(18, 22, 32, .72); box-shadow: var(--shadow); }
+.daily-workflow-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.daily-workflow-heading h2 { font-size: 16px; }
+.daily-actions { display: flex; align-items: center; gap: 12px; }
+.compact-button { padding: 7px 11px; border-radius: 9px; font-size: 12px; }
+.current-location { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.location-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue-strong); box-shadow: 0 0 12px rgba(245, 110, 14, .75); }
+.hero-card, .panel, .next-step-card { border: 1px solid var(--border); border-radius: 18px; background: rgba(18, 22, 32, .86); box-shadow: var(--shadow); }
+.hero-card, .flow-strip, .next-step-card { display: none; }
+.hero-card { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; padding: clamp(24px, 5vw, 46px); overflow: hidden; position: relative; }
+.hero-card:after { content: ""; position: absolute; width: 270px; height: 270px; right: -90px; top: -110px; border-radius: 50%; border: 1px solid rgba(114, 223, 194, .23); box-shadow: 0 0 0 18px rgba(114, 223, 194, .04), 0 0 0 38px rgba(114, 223, 194, .025); }
+.eyebrow { margin: 0 0 8px; color: var(--mint); font-size: 11px; font-weight: 800; letter-spacing: 1.7px; }
+h1, h2, h3, p { margin-top: 0; }
+h1 { max-width: 600px; margin-bottom: 12px; font-size: clamp(31px, 5vw, 55px); letter-spacing: -2.2px; line-height: 1.02; }
+h2 { margin-bottom: 0; font-size: 22px; letter-spacing: -.65px; }
+h3 { margin-bottom: 0; font-size: 15px; }
+.hero-copy { max-width: 610px; margin-bottom: 0; color: var(--muted); font-size: 16px; }
+.hero-actions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 10px; }
+.primary-button, .secondary-button { border: 0; border-radius: 11px; padding: 11px 15px; font-weight: 750; transition: transform .16s ease, background .16s ease, opacity .16s ease; }
+.primary-button { color: #ffffff; background: linear-gradient(135deg, var(--blue-strong), var(--blue)); box-shadow: 0 8px 20px rgba(245, 110, 14, .22); }
+.primary-button:hover:not(:disabled), .secondary-button:hover:not(:disabled) { transform: translateY(-1px); }
+.primary-button:disabled, .secondary-button:disabled { opacity: .38; cursor: not-allowed; }
+.secondary-button { color: var(--text); background: rgba(255, 255, 255, .07); border: 1px solid var(--border); }
+.full { width: 100%; }
+.flow-strip { display: flex; align-items: center; gap: 8px; margin: 0; padding: 0; overflow-x: auto; border: 0; background: transparent; }
+.flow-step { flex: 1 0 auto; display: flex; gap: 7px; min-width: 94px; padding: 6px 7px; border: 1px solid transparent; border-radius: 10px; color: var(--muted); background: transparent; text-align: left; }
+.flow-step:hover { border-color: rgba(245, 110, 14, .28); background: rgba(245, 110, 14, .06); }
+.flow-step span { display: grid; place-items: center; width: 23px; height: 23px; border: 1px solid var(--border); border-radius: 50%; font-size: 11px; font-weight: 800; }
+.flow-step.active { color: var(--text); }
+.flow-step.active { border-color: rgba(245, 110, 14, .32); background: rgba(245, 110, 14, .08); }
+.flow-step.active span { color: #ffffff; border-color: transparent; background: var(--blue-strong); }
+.flow-step.complete span { color: #ffffff; border-color: transparent; background: #b45309; }
+.flow-step strong { display: block; font-size: 12px; }
+.flow-step small { display: none; }
+.flow-line { position: relative; width: 20px; min-width: 20px; height: 1px; background: var(--border); }
+.flow-line::after { content: "›"; position: absolute; right: -2px; top: -11px; color: var(--muted); font-size: 18px; line-height: 1; }
+.dashboard-grid { display: grid; grid-template-columns: 1.12fr .88fr; gap: 18px; }
+.panel { padding: 20px; }
+.panel-heading { justify-content: space-between; gap: 15px; margin-bottom: 18px; }
+.count-badge { background: rgba(255,255,255,.04); }
+.count-badge.accent { color: var(--mint); border-color: rgba(114, 223, 194, .25); }
+.briefing-meta { justify-content: space-between; gap: 12px; margin-bottom: 16px; color: var(--muted); font-size: 12px; }
+.story-list, .queue-list { display: grid; gap: 10px; }
+.story-card { display: grid; grid-template-columns: 40px 1fr auto; gap: 13px; align-items: center; padding: 14px; border: 1px solid var(--border); border-radius: 15px; background: rgba(7, 16, 30, .35); transition: border-color .16s ease, background .16s ease; }
+.story-card:hover, .story-card.selected { border-color: rgba(245, 110, 14, .55); background: rgba(245, 110, 14, .07); }
+.story-rank { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; color: var(--mint); background: rgba(114, 223, 194, .11); font-size: 17px; font-weight: 850; }
+.story-title { margin: 0 0 4px; font-weight: 760; line-height: 1.25; }
+.story-summary { margin: 0; color: var(--muted); font-size: 12px; }
+.story-footer { display: flex; gap: 7px; margin-top: 8px; }
+.category-chip { display: inline-block; color: var(--blue); font-size: 11px; font-weight: 750; }
+.impact-chip { color: var(--amber); font-size: 11px; }
+.story-action { border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; color: var(--text); background: transparent; font-size: 12px; font-weight: 750; }
+.story-action.selected-action { color: #06101e; border-color: transparent; background: var(--mint); }
+.queue-list { margin-bottom: 12px; }
+.queue-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 13px; border: 1px solid var(--border); border-radius: 13px; background: rgba(7, 16, 30, .35); }
+.queue-item-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.queue-item-meta { margin-top: 3px; color: var(--muted); font-size: 11px; }
+.queue-status { color: var(--mint); font-size: 11px; font-weight: 800; }
+.empty-queue, .studio-empty { display: grid; place-items: center; padding: 32px 14px; text-align: center; color: var(--muted); }
+.empty-queue strong, .studio-empty h3 { color: var(--text); }
+.empty-queue p, .studio-empty p { max-width: 360px; margin-bottom: 0; font-size: 13px; }
+.empty-icon { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 10px; border-radius: 15px; color: var(--mint); background: rgba(114, 223, 194, .1); font-size: 20px; }
+.empty-icon.large { width: 58px; height: 58px; font-size: 28px; }
+.studio-panel { margin-top: 18px; }
+.studio-heading { margin-bottom: 8px; }
+.stage-badge { color: var(--amber); border-color: rgba(246, 201, 108, .3); }
+.hidden { display: none !important; }
+.stage-hidden { display: none !important; }
+.workspace-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.workspace-card, .drafts-section { border: 1px solid var(--border); border-radius: 16px; background: rgba(7, 16, 30, .32); padding: 17px; }
+.read-copy-card { margin-bottom: 14px; padding: 17px; border: 1px solid rgba(245, 110, 14, .3); border-radius: 16px; background: rgba(245, 110, 14, .06); }
+.story-brief-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.story-brief-grid > div { padding: 10px 11px; border: 1px solid var(--border); border-radius: 11px; background: rgba(0, 0, 0, .12); }
+.brief-label { display: block; margin-bottom: 4px; color: var(--blue); font-size: 10px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
+.story-brief-grid p { margin: 0; color: var(--text); font-size: 13px; line-height: 1.4; }
+.read-copy { max-width: 840px; margin: 12px 0 0; color: #f7f0eb; font-size: 16px; line-height: 1.65; }
+.card-title-row { justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.mini-label { padding: 4px 8px; color: var(--blue); border-color: rgba(110, 168, 255, .28); font-size: 10px; text-transform: uppercase; letter-spacing: .8px; }
+.muted { color: var(--muted); font-size: 13px; }
+.upload-box { display: flex; align-items: center; gap: 12px; margin-top: 15px; padding: 17px; border: 1px dashed rgba(110, 168, 255, .45); border-radius: 13px; color: var(--text); background: rgba(110, 168, 255, .06); cursor: pointer; }
+.upload-icon { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 11px; color: var(--blue); background: rgba(110, 168, 255, .12); font-size: 21px; }
+.upload-box strong, .upload-box small { display: block; }
+.upload-box small { color: var(--muted); margin-top: 3px; font-size: 11px; }
+.file-chip { gap: 8px; margin-top: 10px; padding: 8px 10px; border: 1px solid rgba(114, 223, 194, .28); border-radius: 10px; color: var(--mint); background: rgba(114, 223, 194, .07); font-size: 12px; }
+.file-chip span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-chip button { margin-left: auto; border: 0; color: var(--muted); background: transparent; font-size: 18px; }
+.edit-checklist { display: grid; gap: 8px; margin: 13px 0 15px; color: var(--muted); font-size: 12px; }
+.check { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 5px; border-radius: 50%; color: #06101e; background: var(--mint); font-size: 11px; font-weight: 900; }
+.progress-wrap { margin-top: 11px; color: var(--muted); font-size: 11px; }
+.progress-track { height: 7px; margin-bottom: 7px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.08); }
+.progress-bar { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--mint), var(--blue)); transition: width .3s ease; }
+.drafts-section { margin-top: 14px; }
+.draft-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+.draft-card { min-height: 107px; padding: 11px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,.03); }
+.draft-card strong { display: block; margin-bottom: 7px; font-size: 12px; }
+.draft-card p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.35; }
+.draft-card.ready { border-color: rgba(114, 223, 194, .32); }
+.approval-bar { justify-content: space-between; gap: 15px; margin-top: 14px; padding: 15px 17px; border: 1px solid rgba(114, 223, 194, .25); border-radius: 15px; background: rgba(114, 223, 194, .07); }
+.approval-bar strong, .approval-bar span { display: block; }
+.approval-bar span { margin-top: 3px; color: var(--muted); font-size: 12px; }
+.next-step-card { display: flex; align-items: center; gap: 14px; margin-top: 18px; padding: 17px 20px; }
+.next-step-icon { display: grid; place-items: center; width: 39px; height: 39px; border-radius: 12px; color: var(--blue); background: rgba(110, 168, 255, .1); font-size: 21px; }
+.next-step-card p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+.next-step-tag { margin-left: auto; color: var(--blue); border-color: rgba(110, 168, 255, .27); }
+.hero-card, .next-step-card { display: none !important; }
+.count-badge.accent { border-color: rgba(245, 110, 14, .3); }
+.story-rank { background: rgba(245, 110, 14, .11); }
+.empty-icon { background: rgba(245, 110, 14, .1); }
+.file-chip { border-color: rgba(245, 110, 14, .3); background: rgba(245, 110, 14, .07); }
+.progress-bar { background: linear-gradient(90deg, var(--blue-strong), var(--blue)); }
+.bottom-nav { position: fixed; z-index: 11; bottom: 0; left: 0; right: 0; display: none; justify-content: space-around; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: rgba(9, 17, 31, .94); backdrop-filter: blur(16px); }
+.nav-item { display: grid; gap: 3px; border: 0; color: var(--muted); background: transparent; font-size: 11px; }
+.nav-item span { font-size: 18px; }
+.nav-item.active { color: var(--mint); }
+.toast { position: fixed; z-index: 20; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 11px 15px; border: 1px solid rgba(114, 223, 194, .32); border-radius: 11px; color: var(--text); background: #152740; box-shadow: var(--shadow); transition: opacity .2s ease, transform .2s ease; }
+.toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+@media (max-width: 850px) {
+  .daily-workflow-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .daily-actions { width: 100%; justify-content: space-between; }
+  .flow-step { min-width: 88px; }
+  .dashboard-grid, .workspace-columns { grid-template-columns: 1fr; }
+  .draft-grid { grid-template-columns: repeat(2, 1fr); }
+  .bottom-nav { display: flex; }
+  body { padding-bottom: 76px; }
+}
+
+@media (max-width: 520px) {
+  .shell { width: min(100% - 20px, 1250px); margin-top: 16px; }
+  .topbar { padding: 12px 14px; }
+  .status-pill { display: none; }
+  .hero-card, .panel { padding: 17px; border-radius: 18px; }
+  h1 { font-size: 37px; }
+  .briefing-meta { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .story-brief-grid { grid-template-columns: 1fr; }
+  .story-card { grid-template-columns: 34px 1fr; }
+  .story-action { grid-column: 2; justify-self: start; }
+  .approval-bar { align-items: stretch; flex-direction: column; }
+  .approval-bar .primary-button { width: 100%; }
+  .next-step-tag { display: none; }
+}
+
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-lockup">
+      <div class="brand-mark">N→S</div>
+      <div>
+        <div class="brand-name">News to Show</div>
+        <div class="brand-subtitle">Tablet-first content studio</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span class="status-pill"><span class="status-dot"></span> Prototype ready</span>
+      <button class="icon-button" id="resetDemo" aria-label="Reset demo">↺</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="daily-workflow" aria-label="Today's production path">
+      <div class="daily-workflow-heading">
+        <div>
+          <p class="eyebrow">AIX HUB · NEWS TO SHOW</p>
+          <h2 id="todayLabel">Today · October 18, 2026</h2>
+        </div>
+        <div class="daily-actions">
+          <span class="current-location"><span class="location-dot"></span><span id="currentLocation">You are here: Research</span></span>
+          <button class="primary-button compact-button" id="startBriefing">▶ Listen</button>
+        </div>
+      </div>
+      <div class="flow-strip" role="tablist" aria-label="Daily workflow stages">
+        <button class="flow-step active" type="button" role="tab" aria-selected="true" data-stage="research"><span>1</span><strong>Research</strong><small>Top stories</small></button>
+        <div class="flow-line" aria-hidden="true"></div>
+        <button class="flow-step" type="button" role="tab" aria-selected="false" data-stage="selected"><span>2</span><strong>Selected</strong><small>Your picks</small></button>
+        <div class="flow-line" aria-hidden="true"></div>
+        <button class="flow-step" type="button" role="tab" aria-selected="false" data-stage="script"><span>3</span><strong>Script</strong><small>Read copy</small></button>
+        <div class="flow-line" aria-hidden="true"></div>
+        <button class="flow-step" type="button" role="tab" aria-selected="false" data-stage="edited"><span>4</span><strong>Edited</strong><small>Upload + edit</small></button>
+        <div class="flow-line" aria-hidden="true"></div>
+        <button class="flow-step" type="button" role="tab" aria-selected="false" data-stage="published"><span>5</span><strong>Published</strong><small>Ready to share</small></button>
+      </div>
+    </section>
+    <div class="dashboard-grid">
+      <section class="panel briefing-panel" id="briefingPanel" data-stage-panel="research">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">DAILY BRIEFING</p>
+            <h2>Top stories for today</h2>
+          </div>
+          <span class="count-badge" id="storyCount">4 stories</span>
+        </div>
+        <div class="briefing-meta">
+          <span>AI · Robotics · Policy · Schools</span>
+          <span>Updated 7:30 AM</span>
+        </div>
+        <div class="story-list" id="storyList"></div>
+      </section>
+
+      <section class="panel queue-panel" id="queuePanel" data-stage-panel="selected">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">YOUR PIPELINE</p>
+            <h2>Production queue</h2>
+          </div>
+          <span class="count-badge accent" id="queueCount">0 active</span>
+        </div>
+        <div class="queue-list" id="queueList"></div>
+        <div class="empty-queue" id="emptyQueue">
+          <div class="empty-icon">✦</div>
+          <strong>Choose a story to begin</strong>
+          <p>Your selected story will move here and follow the edit and publishing steps.</p>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel studio-panel" id="studioPanel" data-stage-panel="script edited published">
+      <div class="panel-heading studio-heading">
+        <div>
+          <p class="eyebrow">ACTIVE STORY</p>
+          <h2 id="activeTitle">Nothing selected yet</h2>
+        </div>
+        <span class="stage-badge" id="activeStage">Waiting</span>
+      </div>
+
+      <div class="studio-empty" id="studioEmpty">
+        <div class="empty-icon large">◌</div>
+        <h3>Your tablet workspace</h3>
+        <p>Select a story above. This area gives you the simple wording to read, then lets you upload the video and prepare it for publishing.</p>
+      </div>
+
+      <div class="studio-workspace hidden" id="studioWorkspace">
+        <div class="read-copy-card" data-stage-section="script">
+          <div class="card-title-row">
+            <div><h3>Read this on your tablet</h3><p class="muted">A short, plain-language version of the story.</p></div>
+            <span class="mini-label">2–3 sentences</span>
+          </div>
+          <div class="story-brief-grid">
+            <div><span class="brief-label">30-second preview</span><p id="previewLine"></p></div>
+            <div><span class="brief-label">Why it matters</span><p id="whyItMatters"></p></div>
+          </div>
+          <p class="read-copy" id="readCopy"></p>
+        </div>
+        <div class="workspace-columns" data-stage-section="edited">
+          <div class="workspace-card recording-card">
+            <div class="card-title-row">
+              <h3>1. Add your video</h3>
+              <span class="mini-label">Tablet upload</span>
+            </div>
+            <p class="muted">Upload the raw video from your tablet. The cloud version will later watch this step automatically.</p>
+            <label class="upload-box" for="recordingInput">
+              <span class="upload-icon">↑</span>
+              <span><strong id="uploadLabel">Tap to choose a video</strong><small>MP4 or MOV · one recording</small></span>
+            </label>
+            <input id="recordingInput" type="file" accept="video/*" hidden />
+            <div class="file-chip hidden" id="fileChip"><span>▣</span><span id="fileName"></span><button id="clearFile" aria-label="Remove selected file">×</button></div>
+          </div>
+
+          <div class="workspace-card automation-card" id="automationCard">
+            <div class="card-title-row">
+              <h3>2. Edit automatically</h3>
+              <span class="mini-label">Preset</span>
+            </div>
+            <div class="edit-checklist">
+              <div><span class="check">✓</span> Trim beginning and ending</div>
+              <div><span class="check">✓</span> Clean and level audio</div>
+              <div><span class="check">✓</span> Add captions</div>
+              <div><span class="check">✓</span> Format for short video</div>
+            </div>
+            <button class="primary-button full" id="runEdit" disabled>Run automatic edit</button>
+            <div class="progress-wrap hidden" id="editProgress"><div class="progress-track"><div class="progress-bar" id="progressBar"></div></div><span id="progressLabel">Preparing…</span></div>
+          </div>
+        </div>
+
+        <div class="drafts-section" data-stage-section="published">
+          <div class="card-title-row">
+            <div><h3>3. Copy &amp; paste drafts</h3><p class="muted">Simple wording for each platform.</p></div>
+            <button class="secondary-button" id="generateDrafts" disabled>Prepare copy</button>
+          </div>
+          <div class="draft-grid" id="draftGrid"></div>
+        </div>
+
+        <div class="approval-bar" id="approvalBar" data-stage-section="published">
+          <div><strong id="approvalTitle">Approve when ready</strong><span id="approvalCopy">Your final tap is the publishing gate.</span></div>
+          <button class="primary-button" id="approvePublish" disabled>Approve &amp; send to scheduler</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <button class="nav-item active"><span>▦</span>Briefing</button>
+    <button class="nav-item" id="navQueue"><span>◫</span>Queue</button>
+    <button class="nav-item" id="navStudio"><span>✦</span>Studio</button>
+  </nav>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+const initialStories = [
+  { id: 1, rank: 1, category: 'AI companies', title: 'A major model release changes how teams build with AI', summary: 'What changed, who it affects, and whether the announcement is ready for real work.', previewLine: 'New AI model changes the way teams work.', whyItMatters: 'This could change which AI tools businesses choose and how quickly they can put them to work.', readCopy: 'A major AI company released a new model that could change how teams use these tools at work. The important question is what it can do today, not just what the company says it may do later.', impact: 'High impact', status: 'briefing' },
+  { id: 2, rank: 2, category: 'Robotics', title: 'Robots move from demo floors into everyday operations', summary: 'The practical signal behind a new deployment in warehouses and service work.', previewLine: 'Robots are moving into everyday jobs.', whyItMatters: 'Real deployments show where robotics is becoming useful now, beyond demonstrations and headlines.', readCopy: 'Robots are beginning to move beyond demonstrations and into everyday workplaces. This story matters because it shows where robotics is already being used, and where the technology is still being tested.', impact: 'Watch closely', status: 'briefing' },
+  { id: 3, rank: 3, category: 'Policy', title: 'A new public policy proposal could shape AI adoption', summary: 'The federal, state, or local decision to understand before it becomes a headline.', previewLine: 'A new policy could change how AI is used.', whyItMatters: 'The proposal may affect what organizations can do with AI, but it still has to move through the rulemaking process.', readCopy: 'A new policy proposal could affect how organizations use AI. It is still a proposal, so the next step is to watch what changes before it becomes an actual rule.', impact: 'Needs context', status: 'briefing' },
+  { id: 4, rank: 4, category: 'Schools', title: 'Schools test a new approach to teaching with AI', summary: 'What educators are actually implementing and what families should know.', previewLine: 'Schools are testing new ways to use AI.', whyItMatters: 'The real story is what teachers are implementing and how students and families may be affected.', readCopy: 'Schools are testing a new way to use AI in the classroom. The useful part of this story is seeing what teachers are actually doing and how students and families may be affected.', impact: 'Useful angle', status: 'briefing' }
+];
+
+let stories = loadStories();
+let selectedId = Number(localStorage.getItem('newsToShow.selectedId')) || null;
+let activeStage = localStorage.getItem('newsToShow.activeStage') || 'research';
+let toastTimer;
+
+function loadStories() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('newsToShow.stories'));
+    if (Array.isArray(saved) && saved.length) return saved.map(story => ({ ...(initialStories.find(item => item.id === story.id) || {}), ...story }));
+    return structuredClone(initialStories);
+  } catch { return structuredClone(initialStories); }
+}
+
+function save() {
+  localStorage.setItem('newsToShow.stories', JSON.stringify(stories));
+  if (selectedId) localStorage.setItem('newsToShow.selectedId', selectedId);
+}
+
+function selectedStory() { return stories.find(story => story.id === selectedId); }
+
+function render() {
+  renderStories();
+  renderQueue();
+  renderStudio();
+  renderWorkflow();
+  document.getElementById('todayLabel').textContent = `Today · ${new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date())}`;
+  document.getElementById('storyCount').textContent = `${stories.length} stories`;
+}
+
+function renderWorkflow() {
+  const stageOrder = ['research', 'selected', 'script', 'edited', 'published'];
+  const story = selectedStory();
+  const progress = !story ? 0 : ({ recorded: 2, editing: 3, review: 4, ready: 4, scheduled: 5 }[story.status] || 1);
+  document.querySelectorAll('[data-stage-panel]').forEach(panel => {
+    const stages = panel.dataset.stagePanel.split(' ');
+    panel.classList.toggle('stage-hidden', !stages.includes(activeStage));
+  });
+  document.querySelectorAll('[data-stage-section]').forEach(section => {
+    const stages = section.dataset.stageSection.split(' ');
+    section.classList.toggle('stage-hidden', !stages.includes(activeStage));
+  });
+  document.querySelectorAll('[data-stage]').forEach(button => {
+    const stage = button.dataset.stage;
+    const index = stageOrder.indexOf(stage) + 1;
+    button.classList.toggle('active', stage === activeStage);
+    button.classList.toggle('complete', index < progress);
+    button.setAttribute('aria-selected', stage === activeStage ? 'true' : 'false');
+  });
+  const labels = { research: 'Research', selected: 'Selected stories', script: 'Script', edited: 'Edited package', published: 'Published' };
+  document.getElementById('currentLocation').textContent = `You are here: ${labels[activeStage]}`;
+}
+
+function setStage(stage, shouldScroll = true) {
+  activeStage = stage;
+  localStorage.setItem('newsToShow.activeStage', activeStage);
+  renderWorkflow();
+  if (!shouldScroll) return;
+  const targets = {
+    research: 'briefingPanel',
+    selected: 'queuePanel',
+    script: 'readCopy',
+    edited: 'automationCard',
+    published: 'approvalBar'
+  };
+  const target = document.getElementById(targets[stage]);
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  showToast(`${stage[0].toUpperCase()}${stage.slice(1)} stage opened`);
+}
+
+function renderStories() {
+  const list = document.getElementById('storyList');
+  list.innerHTML = stories.map(story => `
+    <article class="story-card ${story.id === selectedId ? 'selected' : ''}">
+      <div class="story-rank">${story.rank}</div>
+      <div>
+        <p class="story-title">${story.title}</p>
+        <p class="story-summary">${story.summary}</p>
+        <div class="story-footer"><span class="category-chip">${story.category}</span><span class="impact-chip">• ${story.impact}</span></div>
+      </div>
+      <button class="story-action ${story.id === selectedId ? 'selected-action' : ''}" data-select="${story.id}">${story.id === selectedId ? 'Selected' : 'Use story'}</button>
+    </article>
+  `).join('');
+  list.querySelectorAll('[data-select]').forEach(button => button.addEventListener('click', () => selectStory(Number(button.dataset.select))));
+}
+
+function renderQueue() {
+  const queue = stories.filter(story => story.status !== 'briefing');
+  document.getElementById('queueCount').textContent = `${queue.length} active`;
+  document.getElementById('queueList').innerHTML = queue.map(story => `
+    <button class="queue-item" data-queue="${story.id}">
+      <span><span class="queue-item-title">${story.title}</span><span class="queue-item-meta">${story.category}</span></span>
+      <span class="queue-status">${labelForStatus(story.status)}</span>
+    </button>
+  `).join('');
+  document.getElementById('emptyQueue').classList.toggle('hidden', queue.length > 0);
+  document.querySelectorAll('[data-queue]').forEach(button => button.addEventListener('click', () => selectStory(Number(button.dataset.queue))));
+}
+
+function renderStudio() {
+  const story = selectedStory();
+  const empty = document.getElementById('studioEmpty');
+  const workspace = document.getElementById('studioWorkspace');
+  empty.classList.toggle('hidden', Boolean(story));
+  workspace.classList.toggle('hidden', !story);
+  if (!story) {
+    document.getElementById('activeTitle').textContent = 'Nothing selected yet';
+    document.getElementById('activeStage').textContent = 'Waiting';
+    return;
+  }
+  document.getElementById('activeTitle').textContent = story.title;
+  document.getElementById('activeStage').textContent = labelForStatus(story.status);
+  document.getElementById('previewLine').textContent = story.previewLine || 'A short preview line will appear here.';
+  document.getElementById('whyItMatters').textContent = story.whyItMatters || 'The reason this story matters will appear here.';
+  document.getElementById('readCopy').textContent = story.readCopy || 'A clear, short version of this story will appear here.';
+  document.getElementById('runEdit').disabled = !story.recording || ['editing', 'review', 'ready'].includes(story.status);
+  document.getElementById('generateDrafts').disabled = !['review', 'ready'].includes(story.status);
+  document.getElementById('approvePublish').disabled = story.status !== 'ready';
+  document.getElementById('uploadLabel').textContent = story.recordingName || 'Tap to choose a video';
+  document.getElementById('fileChip').classList.toggle('hidden', !story.recordingName);
+  document.getElementById('fileName').textContent = story.recordingName || '';
+  document.getElementById('editProgress').classList.toggle('hidden', story.status !== 'editing');
+  renderDrafts(story);
+  updateApproval(story);
+}
+
+function renderDrafts(story) {
+  const drafts = story.drafts || {};
+  if (!story.drafts) {
+    document.getElementById('draftGrid').innerHTML = '<div class="draft-card" style="grid-column: 1 / -1"><strong>Drafts will appear here</strong><p>Run the light edit first. Then the studio will prepare the platform copy for your review.</p></div>';
+    return;
+  }
+  const channels = [
+    ['YouTube', drafts.youtube || 'Title and description will appear here.'],
+    ['Instagram', drafts.instagram || 'Caption and hashtags will appear here.'],
+    ['TikTok', drafts.tiktok || 'Hook and short caption will appear here.'],
+    ['Facebook', drafts.facebook || 'Post copy will appear here.']
+  ];
+  document.getElementById('draftGrid').innerHTML = channels.map(([name, copy]) => `<div class="draft-card ${story.drafts ? 'ready' : ''}"><strong>${name}</strong><p>${copy}</p></div>`).join('');
+}
+
+function updateApproval(story) {
+  const title = document.getElementById('approvalTitle');
+  const copy = document.getElementById('approvalCopy');
+  if (story.status === 'ready') { title.textContent = 'Ready for your approval'; copy.textContent = 'Review the video and drafts, then send the package to your scheduler.'; }
+  else if (story.status === 'review') { title.textContent = 'Review your results'; copy.textContent = 'Generate platform drafts, then approve when everything sounds like you.'; }
+  else if (story.status === 'editing') { title.textContent = 'Editing in progress'; copy.textContent = 'The automatic light-edit preset is preparing your review package.'; }
+  else { title.textContent = 'Add a recording to begin'; copy.textContent = 'Your final tap will always remain the publishing gate.'; }
+}
+
+function labelForStatus(status) { return ({ briefing: 'Briefing', recorded: 'Recorded', editing: 'Editing', review: 'Review', ready: 'Ready', scheduled: 'Scheduled' })[status] || 'Waiting'; }
+
+function selectStory(id) {
+  selectedId = id;
+  const story = selectedStory();
+  if (story.status === 'briefing') story.status = 'recorded';
+  setStage('script', false);
+  save(); render();
+  document.getElementById('studioPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  showToast('Story added to your production queue');
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message; toast.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+document.getElementById('recordingInput').addEventListener('change', event => {
+  const file = event.target.files?.[0];
+  const story = selectedStory();
+  if (!file || !story) return;
+  story.recordingName = file.name; story.recording = true; story.status = 'recorded'; setStage('script', false); save(); render(); showToast('Recording added — ready for the automatic edit');
+});
+
+document.getElementById('clearFile').addEventListener('click', () => {
+  const story = selectedStory(); if (!story) return;
+  story.recordingName = ''; story.recording = false; story.status = 'recorded';
+  document.getElementById('recordingInput').value = ''; save(); render();
+});
+
+document.getElementById('runEdit').addEventListener('click', () => {
+  const story = selectedStory(); if (!story || !story.recording) return;
+  story.status = 'editing'; setStage('edited', false); save(); render();
+  const bar = document.getElementById('progressBar'); const label = document.getElementById('progressLabel');
+  const steps = [[25, 'Trimming the opening…'], [52, 'Cleaning the audio…'], [78, 'Creating captions…'], [100, 'Preparing your review package…']];
+  steps.forEach(([width, text], index) => setTimeout(() => { bar.style.width = `${width}%`; label.textContent = text; if (width === 100) { story.status = 'review'; save(); render(); showToast('Automatic edit complete — review your results'); } }, 650 * (index + 1)));
+});
+
+document.getElementById('generateDrafts').addEventListener('click', () => {
+  const story = selectedStory(); if (!story) return;
+  story.drafts = {
+    youtube: `${story.title} — what changed and why it matters`,
+    instagram: `Here is the part of this story that deserves attention. ${story.title} #AI #Technology`,
+    tiktok: `The real signal behind this headline: ${story.title}`,
+    facebook: `Today’s story: ${story.title}. Here is what I think it means.`
+  };
+  story.status = 'ready';
+  save(); render(); showToast('Platform drafts created');
+});
+
+document.getElementById('approvePublish').addEventListener('click', () => {
+  const story = selectedStory(); if (!story || story.status !== 'ready') return;
+  story.status = 'scheduled'; story.publishedAt = new Date().toISOString(); setStage('published', false); save(); render(); showToast('Package approved — ready for scheduler connection');
+});
+
+document.getElementById('studioPanel').addEventListener('click', event => {
+  if (event.target.id === 'approvePublish') return;
+});
+
+document.getElementById('startBriefing').addEventListener('click', () => showToast('Audio briefing placeholder opened — cloud audio connects next'));
+document.getElementById('navQueue').addEventListener('click', () => setStage('selected'));
+document.getElementById('navStudio').addEventListener('click', () => setStage('script'));
+document.querySelectorAll('[data-stage]').forEach(button => button.addEventListener('click', () => setStage(button.dataset.stage)));
+
+document.getElementById('resetDemo').addEventListener('click', () => {
+  stories = structuredClone(initialStories); selectedId = null; activeStage = 'research'; localStorage.removeItem('newsToShow.stories'); localStorage.removeItem('newsToShow.selectedId'); localStorage.removeItem('newsToShow.activeStage'); render(); showToast('Demo reset');
+});
+
+render();
+
+</script>
+</body>
+</html>
+
