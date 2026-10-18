@@ -544,30 +544,16 @@ function briefingText() {
 
 function speakBriefing() {
   if (!('speechSynthesis' in window)) { showToast('Audio playback is not available in this browser'); return; }
-  const button = document.getElementById('startBriefing').addEventListener('click', speakBriefing);
-document.getElementById('runResearch').addEventListener('click', async () => {
-  const topic = document.getElementById('researchTopic').value.trim();
-  const windowFilter = document.getElementById('researchWindow').value;
-  if (!topic) { showToast('Enter a topic to search'); document.getElementById('researchTopic').focus(); return; }
-  const note = document.getElementById('researchNote');
-  const button = document.getElementById('runResearch');
-  button.disabled = true; note.textContent = `Checking approved sources for “${topic}”…`;
-  try {
-    const response = await fetch(`/api/research?topic=${encodeURIComponent(topic)}&window=${encodeURIComponent(windowFilter)}`);
-    if (!response.ok) throw new Error('Research service is not connected to this hosted preview.');
-    const payload = await response.json();
-    if (!payload.items?.length) { note.textContent = `No matching stories were found in the approved sources for “${topic}”.`; showToast('No matching stories found'); return; }
-    const fresh = payload.items.map((item, index) => ({ id: `research-${Date.now()}-${index}`, rank: stories.length + index + 1, category: item.category || 'Research', title: item.title, summary: item.summary, previewLine: item.previewLine, whyItMatters: item.whyItMatters, readCopy: item.readCopy, impact: item.impact || 'Needs review', status: 'briefing', source: item.source, sourceUrl: item.url, publishedAt: item.publishedAt }));
-    stories = [...fresh, ...stories]; save(); render();
-    note.textContent = `Found ${fresh.length} stories from ${payload.sources.length} approved sources. Choose up to ${MAX_SHOW_STORIES} for the show.`;
-    showToast('In-house research is ready');
-  } catch (error) {
-    const archiveCount = addArchiveResults(topic);
-    note.textContent = archiveCount ? `Live research is unavailable here, so this is an archived demo briefing with ${archiveCount} matching stories.` : 'The research service is not connected to this hosted preview yet. Try a broader topic or use the local preview for live feeds.';
-    showToast(archiveCount ? 'Showing archived demo stories' : 'Research service not connected');
-  } finally { button.disabled = false; }
-});
-filter(story => !terms.length || terms.some(term => `${story.title} ${story.summary} ${story.category}`.toLowerCase().includes(term))).slice(0, 10);
+  const button = document.getElementById('startBriefing');
+  if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); button.textContent = '▶ Listen'; showToast('Briefing stopped'); return; }
+  const utterance = new SpeechSynthesisUtterance(briefingText());
+  utterance.rate = 0.94; utterance.pitch = 1; utterance.onend = () => { button.textContent = '▶ Listen'; };
+  button.textContent = '■ Stop'; window.speechSynthesis.speak(utterance); showToast('Briefing started');
+}
+
+function addArchiveResults(topic = '') {
+  const terms = topic.toLowerCase().split(/[^a-z0-9]+/).filter(word => word.length > 2 && !['news', 'today', 'show', 'what', 'overall', 'general', 'old', 'archive'].includes(word));
+  const matches = archiveStories.filter(story => !terms.length || terms.some(term => `${story.title} ${story.summary} ${story.category}`.toLowerCase().includes(term))).slice(0, 10);
   if (!matches.length) return 0;
   const fresh = matches.map((story, index) => ({ ...story, id: `${story.id}-${Date.now()}-${index}`, rank: index + 1 }));
   stories = [...fresh, ...stories.filter(story => !String(story.id).startsWith('archive-'))]; save(); render(); return fresh.length;
@@ -632,15 +618,27 @@ document.getElementById('studioPanel').addEventListener('click', event => {
 });
 
 document.getElementById('startBriefing').addEventListener('click', speakBriefing);
-document.getElementById('runResearch').addEventListener('click', () => {
+document.getElementById('runResearch').addEventListener('async' === 'async' ? 'click' : 'click', async () => {
   const topic = document.getElementById('researchTopic').value.trim();
   const windowFilter = document.getElementById('researchWindow').value;
   if (!topic) { showToast('Enter a topic to search'); document.getElementById('researchTopic').focus(); return; }
-  const query = [topic, windowFilter].filter(Boolean).join(' ');
-  const url = `https://news.google.com/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
-  showToast('Research service connection pending');
-  document.getElementById('researchNote').textContent = `The research service will organize results here once its cloud endpoint is connected. “${topic}”. The agent version will summarize and organize these results here.`;
-  showToast('Research connection pending');
+  const note = document.getElementById('researchNote');
+  const button = document.getElementById('runResearch');
+  button.disabled = true; note.textContent = `Checking approved sources for “${topic}”…`;
+  try {
+    const response = await fetch(`/api/research?topic=${encodeURIComponent(topic)}&window=${encodeURIComponent(windowFilter)}`);
+    if (!response.ok) throw new Error('Research service is not connected to this hosted preview.');
+    const payload = await response.json();
+    if (!payload.items?.length) { note.textContent = `No matching stories were found in the approved sources for “${topic}”.`; showToast('No matching stories found'); return; }
+    const fresh = payload.items.map((item, index) => ({ id: `research-${Date.now()}-${index}`, rank: stories.length + index + 1, category: item.category || 'Research', title: item.title, summary: item.summary, previewLine: item.previewLine, whyItMatters: item.whyItMatters, readCopy: item.readCopy, impact: item.impact || 'Needs review', status: 'briefing', source: item.source, sourceUrl: item.url, publishedAt: item.publishedAt }));
+    stories = [...fresh, ...stories]; save(); render();
+    note.textContent = `Found ${fresh.length} stories from ${payload.sources.length} approved sources. Choose up to ${MAX_SHOW_STORIES} for the show.`;
+    showToast('In-house research is ready');
+  } catch (error) {
+    const archiveCount = addArchiveResults(topic);
+    note.textContent = archiveCount ? `Live research is unavailable here, so this is an archived demo briefing with ${archiveCount} matching stories.` : 'The research service is not connected to this hosted preview yet. Try a broader topic or use the local preview for live feeds.';
+    showToast(archiveCount ? 'Showing archived demo stories' : 'Research service not connected');
+  } finally { button.disabled = false; }
 });
 document.getElementById('navQueue').addEventListener('click', () => setStage('selected'));
 document.getElementById('navStudio').addEventListener('click', () => setStage('script'));
