@@ -83,6 +83,14 @@ h3 { margin-bottom: 0; font-size: 15px; }
 .count-badge { background: rgba(255,255,255,.04); }
 .count-badge.accent { color: var(--mint); border-color: rgba(114, 223, 194, .25); }
 .briefing-meta { justify-content: space-between; gap: 12px; margin-bottom: 16px; color: var(--muted); font-size: 12px; }
+.research-tool { margin-bottom: 15px; padding: 13px; border: 1px solid rgba(245, 110, 14, .25); border-radius: 13px; background: rgba(245, 110, 14, .05); }
+.research-tool-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.research-tool-heading strong { font-size: 13px; }
+.research-tool-heading p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
+.research-controls { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+.research-controls input, .research-controls select { min-width: 0; padding: 9px 10px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: rgba(0, 0, 0, .2); font-size: 12px; }
+.research-controls select { color: var(--muted); }
+.research-note { margin: 8px 0 0; color: var(--muted); font-size: 10px; }
 .story-list, .queue-list { display: grid; gap: 10px; }
 .story-card { display: grid; grid-template-columns: 40px 1fr auto; gap: 13px; align-items: center; padding: 14px; border: 1px solid var(--border); border-radius: 15px; background: rgba(7, 16, 30, .35); transition: border-color .16s ease, background .16s ease; }
 .story-card:hover, .story-card.selected { border-color: rgba(245, 110, 14, .55); background: rgba(245, 110, 14, .07); }
@@ -176,6 +184,7 @@ h3 { margin-bottom: 0; font-size: 15px; }
   h1 { font-size: 37px; }
   .briefing-meta { align-items: flex-start; flex-direction: column; gap: 3px; }
   .story-brief-grid { grid-template-columns: 1fr; }
+  .research-controls { grid-template-columns: 1fr; }
   .story-card { grid-template-columns: 34px 1fr; }
   .story-action { grid-column: 2; justify-self: start; }
   .approval-bar { align-items: stretch; flex-direction: column; }
@@ -236,6 +245,23 @@ h3 { margin-bottom: 0; font-size: 15px; }
         <div class="briefing-meta">
           <span>AI · Robotics · Policy · Schools</span>
           <span>Updated 7:30 AM</span>
+        </div>
+        <div class="research-tool" id="researchTool">
+          <div class="research-tool-heading">
+            <div><strong>On-demand research</strong><p>Search a topic whenever you want to test an idea.</p></div>
+            <span class="mini-label">Anytime</span>
+          </div>
+          <div class="research-controls">
+            <input id="researchTopic" type="search" placeholder="Try: AI robotics in Texas" aria-label="Research topic" />
+            <select id="researchWindow" aria-label="Research time window">
+              <option value="when:7d">Past week</option>
+              <option value="when:1d">Past day</option>
+              <option value="when:30d">Past month</option>
+              <option value="">Any time</option>
+            </select>
+            <button class="secondary-button" id="runResearch">Search news</button>
+          </div>
+          <p class="research-note" id="researchNote">This opens a live news search now. The automated research agent will connect here later.</p>
         </div>
         <div class="story-list" id="storyList"></div>
       </section>
@@ -557,6 +583,16 @@ document.getElementById('studioPanel').addEventListener('click', event => {
 });
 
 document.getElementById('startBriefing').addEventListener('click', () => showToast('Audio briefing placeholder opened — cloud audio connects next'));
+document.getElementById('runResearch').addEventListener('click', () => {
+  const topic = document.getElementById('researchTopic').value.trim();
+  const windowFilter = document.getElementById('researchWindow').value;
+  if (!topic) { showToast('Enter a topic to search'); document.getElementById('researchTopic').focus(); return; }
+  const query = [topic, windowFilter].filter(Boolean).join(' ');
+  const url = `https://news.google.com/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+  window.open(url, '_blank', 'noopener');
+  document.getElementById('researchNote').textContent = `Live search opened for “${topic}”. The agent version will summarize and organize these results here.`;
+  showToast('Live news search opened');
+});
 document.getElementById('navQueue').addEventListener('click', () => setStage('selected'));
 document.getElementById('navStudio').addEventListener('click', () => setStage('script'));
 document.querySelectorAll('[data-stage]').forEach(button => button.addEventListener('click', () => setStage(button.dataset.stage)));
