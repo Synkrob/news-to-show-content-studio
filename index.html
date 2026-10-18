@@ -524,7 +524,7 @@ function updateApproval(story) {
 
 function labelForStatus(status) { return ({ briefing: 'Briefing', recorded: 'Recorded', editing: 'Editing', review: 'Review', ready: 'Ready', scheduled: 'Scheduled' })[status] || 'Waiting'; }
 
-function selectStory(id) { const candidate = stories.find(item => item.id === id); const selectedCount = stories.filter0 if (candidate?.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
+function selectStory(id) { const candidate = stories.find(item => item.id === id); const selectedCount = stories.filter(item => item.status !== 'briefing').length; if (candidate?.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
   selectedId = id;
   const story = selectedStory(); 
   if (story.status === 'briefing') story.status = 'recorded';
