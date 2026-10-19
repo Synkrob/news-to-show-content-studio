@@ -91,6 +91,10 @@ h3 { margin-bottom: 0; font-size: 15px; }
 .research-controls input, .research-controls select { min-width: 0; padding: 9px 10px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: rgba(0, 0, 0, .2); font-size: 12px; }
 .research-controls select { color: var(--muted); }
 .research-note { margin: 8px 0 0; color: var(--muted); font-size: 10px; }
+.import-label { display: block; margin: 12px 0 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
+#briefingInput { width: 100%; min-height: 105px; resize: vertical; padding: 11px 12px; border: 1px solid var(--border); border-radius: 11px; color: var(--text); background: rgba(0, 0, 0, .16); font: inherit; font-size: 12px; line-height: 1.45; }
+#briefingInput:focus { outline: 2px solid rgba(110, 168, 255, .45); outline-offset: 1px; }
+.feed-status { color: var(--mint); font-size: 11px; line-height: 1.35; }
 .story-list, .queue-list { display: grid; gap: 10px; }
 .story-card { display: grid; grid-template-columns: 40px 1fr auto; gap: 13px; align-items: center; padding: 14px; border: 1px solid var(--border); border-radius: 15px; background: rgba(7, 16, 30, .35); transition: border-color .16s ease, background .16s ease; }
 .story-card:hover, .story-card.selected { border-color: rgba(245, 110, 14, .55); background: rgba(245, 110, 14, .07); }
@@ -125,6 +129,9 @@ h3 { margin-bottom: 0; font-size: 15px; }
 .brief-label { display: block; margin-bottom: 4px; color: var(--blue); font-size: 10px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
 .story-brief-grid p { margin: 0; color: var(--text); font-size: 13px; line-height: 1.4; }
 .read-copy { max-width: 840px; margin: 12px 0 0; color: #f7f0eb; font-size: 16px; line-height: 1.65; }
+.opinion-card { margin-top: 14px; padding: 11px 12px; border: 1px solid rgba(246, 201, 108, .28); border-radius: 11px; background: rgba(246, 201, 108, .06); }
+.opinion-card p { margin: 0; color: #f8e7bc; font-size: 13px; line-height: 1.45; }
+.story-source { margin: 5px 0 8px; overflow: hidden; color: rgba(159, 180, 204, .8); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .card-title-row { justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .mini-label { padding: 4px 8px; color: var(--blue); border-color: rgba(110, 168, 255, .28); font-size: 10px; text-transform: uppercase; letter-spacing: .8px; }
 .muted { color: var(--muted); font-size: 13px; }
@@ -248,20 +255,16 @@ h3 { margin-bottom: 0; font-size: 15px; }
         </div>
         <div class="research-tool" id="researchTool">
           <div class="research-tool-heading">
-            <div><strong>On-demand research</strong><p>Search a topic whenever you want to test an idea.</p></div>
-            <span class="mini-label">Anytime</span>
+            <div><strong>Scheduled research feed</strong><p>Use the one dated AiX Practical AI News briefing as the source for this studio.</p></div>
+            <span class="mini-label">Manual handoff</span>
           </div>
+          <label class="import-label" for="briefingInput">Paste the full scheduled task response</label>
+          <textarea id="briefingInput" rows="5" placeholder="Copy the completed AiX Practical AI News response from ChatGPT and paste it here."></textarea>
           <div class="research-controls">
-            <input id="researchTopic" type="search" placeholder="Try: AI robotics in Texas" aria-label="Research topic" />
-            <select id="researchWindow" aria-label="Research time window">
-              <option value="when:7d">Past week</option>
-              <option value="when:1d">Past day</option>
-              <option value="when:30d">Past month</option>
-              <option value="">Any time</option>
-            </select>
-            <button class="secondary-button" id="runResearch">Run in-house research</button>
+            <button class="secondary-button" id="importBriefing">Import dated briefing</button>
+            <span class="feed-status" id="feedStatus">No scheduled briefing imported yet.</span>
           </div>
-          <p class="research-note" id="researchNote">The research service checks approved feeds and organizes the results here.</p>
+          <p class="research-note" id="researchNote">Manual import is the current handoff because the scheduled task has no supported direct connection to this hosted page.</p>
         </div>
         <div class="story-list" id="storyList"></div>
       </section>
@@ -309,6 +312,10 @@ h3 { margin-bottom: 0; font-size: 15px; }
             <div><span class="brief-label">Why it matters</span><p id="whyItMatters"></p></div>
           </div>
           <p class="read-copy" id="readCopy"></p>
+          <div class="opinion-card">
+            <span class="brief-label">Opinion idea</span>
+            <p id="opinionIdea">Keep this separate from the sourced story so you can adapt it in your own words.</p>
+          </div>
         </div>
         <div class="workspace-columns" data-stage-section="edited">
           <div class="workspace-card recording-card">
@@ -366,6 +373,71 @@ h3 { margin-bottom: 0; font-size: 15px; }
 
   <div class="toast" id="toast" role="status"></div>
   <script>
+const FEED_STORAGE_KEY = 'newsToShow.canonicalFeed.v1';
+const FIELD_LABELS = ['What happened', 'Why it matters for AiX', 'Possible content angle', 'Category', 'Fit', 'Source'];
+
+function escapeHtml(value = '') {
+  return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+}
+
+function cleanText(value = '') {
+  return String(value).replace(/<[^>]*>/g, ' ').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1').replace(/[*_`>#]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function stableStoryId(sourceUrl, title) {
+  const value = (String(sourceUrl || '').toLowerCase().replace(/[?#].*$/, '').replace(/\/$/, '') || cleanText(title).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim());
+  let hash = 2166136261;
+  for (const character of value) { hash ^= character.charCodeAt(0); hash = Math.imul(hash, 16777619); }
+  return `scheduled-${(hash >>> 0).toString(36)}`;
+}
+
+function extractUrls(value) { return [...new Set((String(value).match(/https?:\/\/[^\s)]+/g) || []).map(url => url.replace(/[.,;]+$/, '')))]; }
+
+function fieldValue(block, label) {
+  const lines = block.split('\n');
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const start = lines.findIndex(line => new RegExp(`^\\s*(?:[-*]\\s*)?${escaped}\\s*:\\s*(.*)$`, 'i').test(line));
+  if (start < 0) return '';
+  const first = lines[start].replace(new RegExp(`^\\s*(?:[-*]\\s*)?${escaped}\\s*:\\s*`, 'i'), '');
+  const rest = [];
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const next = new RegExp(`^\\s*(?:[-*]\\s*)?(?:${FIELD_LABELS.join('|')})\\s*:`, 'i');
+    if (next.test(lines[index])) break;
+    if (lines[index].trim()) rest.push(lines[index].trim());
+  }
+  return cleanText([first, ...rest].join(' '));
+}
+
+function parseBriefingText(input) {
+  const raw = String(input || '').trim();
+  if (!raw) throw new Error('Paste the scheduled task response first.');
+  const dateMatch = raw.match(/##\s*DAILY RESEARCH\s*[—-]\s*([^\n]+)/i) || raw.match(/Research performed\s*:\s*([^\n]+)/i);
+  if (!dateMatch) throw new Error('A dated research header is required.');
+  const lines = raw.split(/\r?\n/);
+  const newsStart = lines.findIndex(line => /^\s*#{1,6}\s*2\.\s+NEWS SCAN/i.test(line));
+  if (newsStart < 0) throw new Error('Could not find the NEWS SCAN items in this response.');
+  const newsEnd = lines.findIndex((line, index) => index > newsStart && /^\s*#{1,6}\s*3\.\s+LOCAL/i.test(line));
+  const newsLines = lines.slice(newsStart + 1, newsEnd < 0 ? lines.length : newsEnd);
+  const starts = [];
+  newsLines.forEach((line, index) => { const match = line.trim().match(/^(?:#{1,6}\s*)?(\d+)[.)]\s+(.+?)\s*$/); if (match) starts.push({ number: Number(match[1]), title: cleanText(match[2]), index }); });
+  const items = starts.map((start, index) => {
+    const block = newsLines.slice(start.index + 1, starts[index + 1]?.index ?? newsLines.length).join('\n');
+    const source = fieldValue(block, 'Source');
+    const sourceLinks = extractUrls(source);
+    const summary = fieldValue(block, 'What happened');
+    return { id: stableStoryId(sourceLinks[0], start.title), number: start.number, title: start.title, summary, whyItMatters: fieldValue(block, 'Why it matters for AiX'), contentAngle: fieldValue(block, 'Possible content angle'), category: fieldValue(block, 'Category') || 'Practical AI', fit: fieldValue(block, 'Fit') || 'Maybe', impact: fieldValue(block, 'Fit') || 'Needs review', source, sourceLinks, previewLine: start.title.replace(/[.!?].*$/, ''), readCopy: summary };
+  }).filter(item => item.title && item.summary);
+  if (!items.length) throw new Error('No usable dated story items were found.');
+  const opinionStart = lines.findIndex(line => /^\s*#{1,6}\s*8\.\s+READ-ALOUD VERSION/i.test(line));
+  const opinionEnd = lines.findIndex((line, index) => index > opinionStart && /^\s*#{1,6}\s*9\.\s+PREVIEW VIDEO/i.test(line));
+  const opinionLines = opinionStart < 0 ? [] : lines.slice(opinionStart + 1, opinionEnd < 0 ? lines.length : opinionEnd);
+  const itemByNumber = new Map(items.map(item => [item.number, item]));
+  const opinionStarts = [];
+  opinionLines.forEach((line, index) => { const match = line.trim().match(/^(?:#{1,6}\s*)?(\d+)[.)]\s+(.+?)\s*$/); if (match) opinionStarts.push({ number: Number(match[1]), index }); });
+  const opinionIdeas = opinionStarts.map((start, index) => { const block = opinionLines.slice(start.index + 1, opinionStarts[index + 1]?.index ?? opinionLines.length).join('\n'); const text = fieldValue(block, 'Opinion idea'); const item = itemByNumber.get(start.number); return text && item ? { storyId: item.id, storyNumber: start.number, text } : null; }).filter(Boolean);
+  return { schemaVersion: 1, sourceTask: 'AiX Practical AI News', runDate: cleanText(dateMatch[1]), researchPerformed: cleanText(dateMatch[1]), importedAt: new Date().toISOString(), items, opinionIdeas };
+}
+
 const initialStories = [
   { id: 1, rank: 1, category: 'AI companies', title: 'A major model release changes how teams build with AI', summary: 'What changed, who it affects, and whether the announcement is ready for real work.', previewLine: 'New AI model changes the way teams work.', whyItMatters: 'This could change which AI tools businesses choose and how quickly they can put them to work.', readCopy: 'A major AI company released a new model that could change how teams use these tools at work. The important question is what it can do today, not just what the company says it may do later.', impact: 'High impact', status: 'briefing' },
   { id: 2, rank: 2, category: 'Robotics', title: 'Robots move from demo floors into everyday operations', summary: 'The practical signal behind a new deployment in warehouses and service work.', previewLine: 'Robots are moving into everyday jobs.', whyItMatters: 'Real deployments show where robotics is becoming useful now, beyond demonstrations and headlines.', readCopy: 'Robots are beginning to move beyond demonstrations and into everyday workplaces. This story matters because it shows where robotics is already being used, and where the technology is still being tested.', impact: 'Watch closely', status: 'briefing' },
@@ -381,14 +453,20 @@ const archiveStories = [
   { id: 'archive-4', rank: 4, category: 'Schools', title: 'Archived demo: schools tested classroom AI policies', summary: 'An older example of schools working through acceptable use, teacher support, and student guidelines.', previewLine: 'Schools tested classroom AI policies.', whyItMatters: 'It gives background for current education stories about AI access, safety, and teaching practice.', readCopy: 'This archived example shows schools working through early classroom AI policies. The important part is how educators balanced useful tools with clear expectations for students and families.', impact: 'Archive example', status: 'briefing', source: 'Archive demo', publishedAt: '2023-09-01T00:00:00.000Z' }
 ];
 const MAX_SHOW_STORIES = 7; let stories = loadStories();
-let selectedId = Number(localStorage.getItem('newsToShow.selectedId')) || null;
+let canonicalFeed = loadFeed();
+let selectedId = localStorage.getItem('newsToShow.selectedId') || null;
 let activeStage = localStorage.getItem('newsToShow.activeStage') || 'research';
 let toastTimer;
+
+function loadFeed() {
+  try { const feed = JSON.parse(localStorage.getItem(FEED_STORAGE_KEY)); return feed?.items?.length ? feed : null; }
+  catch { return null; }
+}
 
 function loadStories() {
   try {
     const saved = JSON.parse(localStorage.getItem('newsToShow.stories'));
-    if (Array.isArray(saved) && saved.length) return saved.map(story => ({ ...(initialStories.find(item => item.id === story.id) || {}), ...story }));
+    if (Array.isArray(saved) && saved.length) return saved.map(story => ({ ...(initialStories.find(item => item.id === story.id) || {}), ...story, impact: story.impact || story.fit || 'Needs review' }));
     return structuredClone(initialStories);
   } catch { return structuredClone(initialStories); }
 }
@@ -396,9 +474,14 @@ function loadStories() {
 function save() {
   localStorage.setItem('newsToShow.stories', JSON.stringify(stories));
   if (selectedId) localStorage.setItem('newsToShow.selectedId', selectedId);
+  if (canonicalFeed) localStorage.setItem(FEED_STORAGE_KEY, JSON.stringify(canonicalFeed));
 }
 
-function selectedStory() { return stories.find(story => story.id === selectedId); }
+function selectedStory() { return stories.find(story => String(story.id) === String(selectedId)); }
+
+function isSelected(id) { return String(id) === String(selectedId); }
+
+function opinionFor(story) { return canonicalFeed?.opinionIdeas?.find(idea => idea.storyId === story.id)?.text || 'Keep this separate from the sourced story so you can adapt it in your own words.'; }
 
 function render() {
   renderStories();
@@ -406,7 +489,8 @@ function render() {
   renderStudio();
   renderWorkflow();
   document.getElementById('todayLabel').textContent = `Today · ${new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date())}`;
-  document.getElementById('storyCount').textContent = `${stories.length} of 10 max`;
+  document.getElementById('storyCount').textContent = `${canonicalFeed?.items?.length || stories.length} of 10 max`;
+  document.getElementById('feedStatus').textContent = canonicalFeed ? `${canonicalFeed.runDate || 'Dated run'} · ${canonicalFeed.items.length} stories · ${canonicalFeed.sourceTask}` : 'No scheduled briefing imported yet.';
 }
 
 function renderWorkflow() {
@@ -452,14 +536,15 @@ function setStage(stage, shouldScroll = true) {
 function renderStories() {
   const list = document.getElementById('storyList');
   list.innerHTML = stories.map(story => `
-    <article class="story-card ${story.id === selectedId ? 'selected' : ''}">
-      <div class="story-rank">${story.rank}</div>
+    <article class="story-card ${isSelected(story.id) ? 'selected' : ''}">
+      <div class="story-rank">${escapeHtml(story.rank)}</div>
       <div>
-        <p class="story-title">${story.title}</p>
-        <p class="story-summary">${story.summary}</p>
+        <p class="story-title">${escapeHtml(story.title)}</p>
+        <p class="story-summary">${escapeHtml(story.summary)}</p>
+        <p class="story-source">Source: ${escapeHtml(story.source || 'Scheduled task briefing')}</p>
         <div class="story-footer"><span class="category-chip">${story.category}</span><span class="impact-chip">• ${story.impact}</span></div>
       </div>
-      <button class="story-action ${story.id === selectedId ? 'selected-action' : ''}" data-select="${story.id}">${story.id === selectedId ? 'Selected' : 'Use story'}</button>
+      <button class="story-action ${isSelected(story.id) ? 'selected-action' : ''}" data-select="${escapeHtml(story.id)}">${isSelected(story.id) ? 'Selected' : 'Use story'}</button>
     </article>
   `).join('');
   list.querySelectorAll('[data-select]').forEach(button => button.addEventListener('click', () => selectStory(button.dataset.select)));
@@ -469,8 +554,8 @@ function renderQueue() {
   const queue = stories.filter(story => story.status !== 'briefing');
   document.getElementById('queueCount').textContent = `${queue.length} active`;
   document.getElementById('queueList').innerHTML = queue.map(story => `
-    <button class="queue-item" data-queue="${story.id}">
-      <span><span class="queue-item-title">${story.title}</span><span class="queue-item-meta">${story.category}</span></span>
+    <button class="queue-item" data-queue="${escapeHtml(story.id)}">
+      <span><span class="queue-item-title">${escapeHtml(story.title)}</span><span class="queue-item-meta">${escapeHtml(story.category)}</span></span>
       <span class="queue-status">${labelForStatus(story.status)}</span>
     </button>
   `).join('');
@@ -494,6 +579,7 @@ function renderStudio() {
   document.getElementById('previewLine').textContent = story.previewLine || 'A short preview line will appear here.';
   document.getElementById('whyItMatters').textContent = story.whyItMatters || 'The reason this story matters will appear here.';
   document.getElementById('readCopy').textContent = story.readCopy || 'A clear, short version of this story will appear here.';
+  document.getElementById('opinionIdea').textContent = opinionFor(story);
   document.getElementById('runEdit').disabled = !story.recording || ['editing', 'review', 'ready'].includes(story.status);
   document.getElementById('generateDrafts').disabled = !['review', 'ready'].includes(story.status);
   document.getElementById('approvePublish').disabled = story.status !== 'ready';
@@ -517,7 +603,7 @@ function renderDrafts(story) {
     ['TikTok', drafts.tiktok || 'Hook and short caption will appear here.'],
     ['Facebook', drafts.facebook || 'Post copy will appear here.']
   ];
-  document.getElementById('draftGrid').innerHTML = channels.map(([name, copy]) => `<div class="draft-card ${story.drafts ? 'ready' : ''}"><strong>${name}</strong><p>${copy}</p></div>`).join('');
+  document.getElementById('draftGrid').innerHTML = channels.map(([name, copy]) => `<div class="draft-card ${story.drafts ? 'ready' : ''}"><strong>${escapeHtml(name)}</strong><p>${escapeHtml(copy)}</p></div>`).join('');
 }
 
 function updateApproval(story) {
@@ -533,8 +619,9 @@ function labelForStatus(status) { return ({ briefing: 'Briefing', recorded: 'Rec
 
 
 function briefingStories() {
-  const selected = stories.filter(story => story.status !== 'briefing');
-  return (selected.length ? selected : stories).slice(0, MAX_SHOW_STORIES);
+  const feedStories = stories.filter(story => story.sourceType === 'scheduled-task');
+  const selected = feedStories.filter(story => story.status !== 'briefing');
+  return (selected.length ? selected : feedStories.length ? feedStories : stories).slice(0, MAX_SHOW_STORIES);
 }
 
 function briefingText() {
@@ -557,6 +644,20 @@ function addArchiveResults(topic = '') {
   if (!matches.length) return 0;
   const fresh = matches.map((story, index) => ({ ...story, id: `${story.id}-${Date.now()}-${index}`, rank: index + 1 }));
   stories = [...fresh, ...stories.filter(story => !String(story.id).startsWith('archive-'))]; save(); render(); return fresh.length;
+}
+
+function importCanonicalFeed(feed) {
+  const existingById = new Map(stories.map(story => [String(story.id), story]));
+  const imported = feed.items.map((item, index) => {
+    const existing = existingById.get(String(item.id));
+    return { ...(existing || {}), ...item, id: item.id, rank: index + 1, status: existing?.status || 'briefing', sourceType: 'scheduled-task', runDate: feed.runDate };
+  });
+  const preserved = stories.filter(story => story.sourceType === 'scheduled-task' ? story.status !== 'briefing' : story.status !== 'briefing' || story.isArchive || String(story.id).startsWith('archive-'));
+  const ids = new Set(imported.map(story => String(story.id)));
+  stories = [...imported, ...preserved.filter(story => !ids.has(String(story.id)))];
+  canonicalFeed = feed;
+  save();
+  render();
 }
 
 function selectStory(id) { const candidate = stories.find(item => String(item.id) === String(id)); if (!candidate) return; const selectedCount = stories.filter(item => item.status !== 'briefing').length; if (candidate.status === 'briefing' && selectedCount >= MAX_SHOW_STORIES) { showToast(`Keep the show to ${MAX_SHOW_STORIES} stories`); return; }
@@ -618,6 +719,7 @@ document.getElementById('studioPanel').addEventListener('click', event => {
 });
 
 document.getElementById('startBriefing').addEventListener('click', speakBriefing);
+/* Legacy independent RSS research handler removed; the scheduled task is the only research feed.
 document.getElementById('runResearch').addEventListener('async' === 'async' ? 'click' : 'click', async () => {
   const topic = document.getElementById('researchTopic').value.trim();
   const windowFilter = document.getElementById('researchWindow').value;
@@ -640,12 +742,26 @@ document.getElementById('runResearch').addEventListener('async' === 'async' ? 'c
     showToast(archiveCount ? 'Showing archived demo stories' : 'Research service not connected');
   } finally { button.disabled = false; }
 });
+*/
+document.getElementById('importBriefing').addEventListener('click', () => {
+  const note = document.getElementById('researchNote');
+  try {
+    const feed = parseBriefingText(document.getElementById('briefingInput').value);
+    importCanonicalFeed(feed);
+    note.textContent = `Imported ${feed.items.length} stories from the dated ${feed.sourceTask} run. Existing selections and archive items were preserved.`;
+    document.getElementById('briefingInput').value = '';
+    showToast('Dated briefing imported');
+  } catch (error) {
+    note.textContent = error.message || 'This response could not be imported.';
+    showToast('Import needs a full dated briefing');
+  }
+});
 document.getElementById('navQueue').addEventListener('click', () => setStage('selected'));
 document.getElementById('navStudio').addEventListener('click', () => setStage('script'));
 document.querySelectorAll('[data-stage]').forEach(button => button.addEventListener('click', () => setStage(button.dataset.stage)));
 
 document.getElementById('resetDemo').addEventListener('click', () => {
-  stories = structuredClone(initialStories); selectedId = null; activeStage = 'research'; localStorage.removeItem('newsToShow.stories'); localStorage.removeItem('newsToShow.selectedId'); localStorage.removeItem('newsToShow.activeStage'); render(); showToast('Demo reset');
+  stories = structuredClone(initialStories); canonicalFeed = null; selectedId = null; activeStage = 'research'; localStorage.removeItem('newsToShow.stories'); localStorage.removeItem('newsToShow.selectedId'); localStorage.removeItem('newsToShow.activeStage'); localStorage.removeItem(FEED_STORAGE_KEY); render(); showToast('Demo reset');
 });
 
 render();
